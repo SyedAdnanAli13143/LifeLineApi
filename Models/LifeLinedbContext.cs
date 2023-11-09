@@ -153,6 +153,10 @@ public partial class LifeLinedbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("D_Field");
             entity.Property(e => e.DHId).HasColumnName("D_H_ID");
+            entity.Property(e => e.DImage)
+                .HasMaxLength(450)
+                .IsUnicode(false)
+                .HasColumnName("d_image");
             entity.Property(e => e.DMobile)
                 .HasMaxLength(11)
                 .HasColumnName("D_Mobile");

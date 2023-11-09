@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.AspNetCore.Hosting;
+
 
 namespace LifeLineApi.Controllers
 {
@@ -12,13 +14,15 @@ namespace LifeLineApi.Controllers
     [ApiController]
 
    
-    public class Hospital_Cr : ControllerBase
+    public class Doctors_Cr : ControllerBase
     {
         private readonly LifeLinedbContext _dbContext;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public Hospital_Cr(LifeLinedbContext dbContext)
+        public Doctors_Cr(LifeLinedbContext dbContext, IWebHostEnvironment webHostEnvironment)
         {
             _dbContext = dbContext;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         //Doctors Start
@@ -54,7 +58,7 @@ namespace LifeLineApi.Controllers
 
         [HttpPost]
 
-        public async Task<ActionResult<Doctor>> PostDoctors(Doctor s)
+        public async Task<ActionResult<Doctor>> PostDoctors([FromForm]  Doctor s)
         {
             MailMessage mm = new MailMessage();
             mm.From = new MailAddress("aliyankhan6446@gmail.com");
@@ -83,11 +87,24 @@ namespace LifeLineApi.Controllers
 
 
 
-            smtp.Send(mm);
+           
+
+            string filename = Path.GetFileNameWithoutExtension(s.ImageFile.FileName);
+            string extension = Path.GetExtension(s.ImageFile.FileName);
+
+            string folder = "images_d";
+            folder += Guid.NewGuid().ToString() + "_" + s.ImageFile.FileName;
+            s.DImage = folder;
+           
+            string serverFolder = Path.Combine(_webHostEnvironment.WebRootPath, folder);
+
+            s.ImageFile.CopyToAsync(new FileStream(serverFolder, FileMode.Create));
+
+
             s.DPassword = emailrandomnumber.ToString();           
             _dbContext.Doctors.Add(s);
             await _dbContext.SaveChangesAsync();
-
+            smtp.Send(mm);
             return CreatedAtAction(nameof(GetDoctors), new { id = s.DId }, s);
 
         }
