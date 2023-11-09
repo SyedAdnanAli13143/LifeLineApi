@@ -22,7 +22,7 @@ public partial class Doctor
 
     public string? DField { get; set; }
 
-    public string? DAvailablityStatus { get; set; }
+    public string? DAvailablityStatus { get; set; } 
 
     public string? DImage { get; set; }
 
