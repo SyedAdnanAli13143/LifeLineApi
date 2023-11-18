@@ -5,8 +5,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<LifeLinedbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("lifeline")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("lifeline")));
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowOrigin",
+        builder => builder.WithOrigins("http://localhost:5000") // Replace with the actual origin of your frontend application
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
+});
+
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -19,9 +30,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseStaticFiles();
-app.UseAuthorization();
+
+app.UseCors("AllowOrigin"); // Apply CORS policy
 
 app.MapControllers();
+app.UseStaticFiles();
+app.UseAuthorization();
 
 app.Run();
