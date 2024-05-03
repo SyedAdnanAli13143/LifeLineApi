@@ -31,7 +31,7 @@ namespace LifeLineApi.Controllers
         [HttpPost]
 
         public async Task<ActionResult<Appointment>> PostAppointment(Appointment s)
-        {
+            {
 
 
             _dbContext.Appointments.Add(s);
@@ -95,5 +95,52 @@ namespace LifeLineApi.Controllers
             await _dbContext.SaveChangesAsync();
             return Ok();
         }
+
+        [HttpGet("appointments")]
+        public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments([FromQuery] int hospitalId)
+        {
+            try
+            {
+                // Fetch doctors associated with the hospital
+                var doctors = await _dbContext.Doctors
+                    .Where(d => d.DHId == hospitalId)
+                    .ToListAsync();
+
+                // Extract doctor IDs from the list of doctors
+                var doctorIds = doctors.Select(d => d.DId).ToList(); // Use DId which is int?
+
+                // Fetch appointments associated with the identified doctors
+                var appointments = await _dbContext.Appointments
+                    .Where(a => doctorIds.Contains(a.ADId.Value))
+                    .Select(a => new Appointment
+                    {
+                        AId = a.AId,
+                        AHId = a.AHId,
+                        ADId = a.ADId,
+                        APatientDob = a.APatientDob,
+                        APatientName = a.APatientName,
+                        ADate = a.ADate,
+                        ATime = a.ATime,
+                        AMobile = a.AMobile,
+                        AType = a.AType,
+                        AReason = a.AReason,
+                        AD = a.AD,
+                        
+                        
+                        
+                    })
+                    .ToListAsync();
+
+                return Ok(appointments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
+
+
+
     }
 }

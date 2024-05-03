@@ -28,6 +28,28 @@ namespace LifeLineApi.Controllers
             return stud;
         }
 
+
+        [HttpGet]
+        [Route("api/BloodAvailability/{hospitalId}")]
+        public async Task<ActionResult<IEnumerable<BloodAvailability>>> GetBloodAvailabilityByHospitalId(int hospitalId)
+        {
+            // Assuming that your BloodAvailability model has a property named HospitalId
+            var bloodAvailabilityList = await _dbContext.BloodAvailabilities
+                .Where(ba => ba.BaHId == hospitalId)
+                .Take(30)  // Limit the result to 30 records
+                .ToListAsync();
+
+            if (bloodAvailabilityList == null || bloodAvailabilityList.Count == 0)
+            {
+                return NotFound("No blood availability records found for the given Hospital ID.");
+            }
+
+            return Ok(bloodAvailabilityList);
+        }
+
+
+
+
         [HttpPost]
 
         public async Task<ActionResult<BloodAvailability>> PostAppointment(BloodAvailability s)

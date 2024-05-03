@@ -54,7 +54,10 @@ namespace LifeLineApi.Controllers
 
         public async Task<ActionResult<Doctor>> PostEmployee(HEmployee s)
         {
-            MailMessage mm = new MailMessage();
+            var checkemail = _dbContext.HEmployees.Where(x => x.HeEmail == s.HeEmail).FirstOrDefault();
+            if (checkemail == null)
+            {
+                MailMessage mm = new MailMessage();
             mm.From = new MailAddress("aliyankhan6446@gmail.com");
             mm.To.Add(new MailAddress(s.HeEmail));
 
@@ -65,7 +68,8 @@ namespace LifeLineApi.Controllers
             mm.Subject = "Login credentials";
             mm.Body = "Click On the following link to log into LifeLine";
             mm.Body = "Hi," + "<br/><br/>" + "We got request for  your account creation. Please click on the below link to Login an account" +
-                "<br/><br/> Password  is : " + emailrandomnumber + "<br/><br/>";
+                "<br/><br/> Password  is : " + emailrandomnumber + "<br/><br/>" +
+                        "<a href='http://localhost:5000/admin/Login'>Login Link</a>";
             mm.IsBodyHtml = true;
 
             SmtpClient smtp = new SmtpClient();
@@ -83,11 +87,21 @@ namespace LifeLineApi.Controllers
 
             smtp.Send(mm);
             s.HePassword = emailrandomnumber.ToString();
+            User t = new User();
+            t.Email = s.HeEmail;
+            t.Password = s.HePassword;
+
+            t.RoleId = 3;
+            _dbContext.Users.Add(t);
             _dbContext.HEmployees.Add(s);
             await _dbContext.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetEmployee), new { id = s.HeId }, s);
-
+            }
+            else
+            {
+                return StatusCode(403, "Employee with this Email already exists! ");
+            }
         }
 
 

@@ -55,59 +55,111 @@ namespace LifeLineApi.Controllers
             }
             return stud;
         }
+        [HttpGet("ByHospitalId/{dhId}")]
+        public async Task<ActionResult<IEnumerable<Doctor>>> GetDoctorsByHospitalId(int dhId)
+        {
+            var doctors = await _dbContext.Doctors
+                .Where(doctor => doctor.DHId == dhId)
+                .ToListAsync();
+
+            if (doctors == null || doctors.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return doctors;
+        }
 
         [HttpPost]
-
-        public async Task<ActionResult<Doctor>> PostDoctors([FromForm]  Doctor s)
+        public async Task<ActionResult<Doctor>> PostDoctors([FromForm] Doctor s)
         {
-            MailMessage mm = new MailMessage();
-            mm.From = new MailAddress("aliyankhan6446@gmail.com");
-            mm.To.Add(new MailAddress(s.DEmail));
+            var checkemail = _dbContext.Doctors.Where(x => x.DEmail == s.DEmail).FirstOrDefault();
+            if (checkemail == null)
+            {
+                try
+            {
+                MailMessage mm = new MailMessage();
+                mm.From = new MailAddress("aliyankhan6446@gmail.com");
+                mm.To.Add(new MailAddress(s.DEmail));
 
-            Random emailrandomnum = new Random();
-            int emailrandomnumber = emailrandomnum.Next(1000, 10000);
+                Random emailrandomnum = new Random();
+                int emailrandomnumber = emailrandomnum.Next(1000, 10000);
 
+                mm.Subject = "Login credentials";
+                mm.Body = "Click On the following link to log into LifeLine";
+                mm.Body += "Hi," + "<br/><br/>" + "We got a request for your account creation. Please click on the below link to Login an account" +
+                "<br/><br/> Password is : " + emailrandomnumber + "<br/><br/>" +
+                        "<a href='http://localhost:5000/admin/Login'>Login Link</a>";
+                mm.IsBodyHtml = true;
 
-            mm.Subject = "Login credentials";
-            mm.Body = "Click On the following link to log into LifeLine";
-            mm.Body = "Hi," + "<br/><br/>" + "We got request for  your account creation. Please click on the below link to Login an account" +
-                "<br/><br/> Password  is : " + emailrandomnumber + "<br/><br/>";
-            mm.IsBodyHtml = true;
+                SmtpClient smtp = new SmtpClient();
+                smtp.Host = "smtp.gmail.com";
+                smtp.Port = 587;
+                smtp.EnableSsl = true;
 
-            SmtpClient smtp = new SmtpClient();
-            smtp.Host = "smtp.gmail.com";
-            smtp.Port = 587;
-            smtp.EnableSsl = true;
+                NetworkCredential nc = new NetworkCredential("aliyankhan6446@gmail.com", "rtnr piax mgbn xzyc");
 
-            NetworkCredential nc = new NetworkCredential("aliyankhan6446@gmail.com", "rtnr piax mgbn xzyc");
-
-            smtp.UseDefaultCredentials = true;
-            smtp.Credentials = nc;
-            smtp.UseDefaultCredentials = false;
-
-
-
-           
-
-            string filename = Path.GetFileNameWithoutExtension(s.ImageFile.FileName);
-            string extension = Path.GetExtension(s.ImageFile.FileName);
-
-            string folder = "images_d";
-            folder += Guid.NewGuid().ToString() + "_" + s.ImageFile.FileName;
-            s.DImage = folder;
-           
-            string serverFolder = Path.Combine(_webHostEnvironment.WebRootPath, folder);
-
-            s.ImageFile.CopyToAsync(new FileStream(serverFolder, FileMode.Create));
+                smtp.UseDefaultCredentials = false;
+                smtp.Credentials = nc;
 
 
-            s.DPassword = emailrandomnumber.ToString();           
-            _dbContext.Doctors.Add(s);
-            await _dbContext.SaveChangesAsync();
-            smtp.Send(mm);
-            return CreatedAtAction(nameof(GetDoctors), new { id = s.DId }, s);
 
+                if (s.ImageFile != null)
+                {
+                    string filename = Path.GetFileNameWithoutExtension(s.ImageFile.FileName);
+                    string extension = Path.GetExtension(s.ImageFile.FileName);
+
+                    string folder = "images_d";
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + filename + extension;
+
+                    // Ensure the directory exists
+                    string serverFolderPath = Path.Combine(_webHostEnvironment.WebRootPath, folder);
+                    if (!Directory.Exists(serverFolderPath))
+                    {
+                        Directory.CreateDirectory(serverFolderPath);
+                    }
+
+                    string serverFilePath = Path.Combine(serverFolderPath, uniqueFileName);
+
+                    using (var fileStream = new FileStream(serverFilePath, FileMode.Create))
+                    {
+                        await s.ImageFile.CopyToAsync(fileStream);
+                    }
+
+                    s.DImage = uniqueFileName;
+                }
+                else
+                {
+                    // Handle the case where ImageFile is null, perhaps by setting a default image or throwing an error.
+                }
+
+                s.DPassword = emailrandomnumber.ToString();
+                User t = new User();
+                t.Email = s.DEmail;
+                t.Password = s.DPassword;
+
+                t.RoleId = 4;
+
+                _dbContext.Users.Add(t);
+                _dbContext.Doctors.Add(s);
+                await _dbContext.SaveChangesAsync();
+                smtp.Send(mm);
+                return CreatedAtAction(nameof(GetDoctors), new { id = s.DId }, s);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                return StatusCode(500, "Internal Server Error");
+            }
+            }
+
+            else
+            {
+                return StatusCode(403, "Doctor  with this Email already exists! ");
+            }
         }
+
+
 
 
         [HttpPut]
@@ -169,6 +221,65 @@ namespace LifeLineApi.Controllers
 
         //Doctors End
 
-        
+        [HttpGet("returntime")]
+        public async Task<ActionResult<List<DateTime>>> GetAvailableAppointmentSlots([FromQuery] DoctorAppointmentQuery query)
+        {
+            try
+            {
+                int doctorId = query.DoctorId;
+                DateTime appointmentDate = query.AppointmentDate.Date; 
+
+               
+                var doctor = await _dbContext.Doctors.FindAsync(doctorId);
+
+                if (doctor != null)
+                {
+                    
+                    TimeSpan checkinTime = doctor.CheckinTime ?? TimeSpan.Zero;
+                    TimeSpan checkoutTime = doctor.CheckoutTime ?? TimeSpan.Zero;
+                    TimeSpan averageTimeToSeeOnePatient = doctor.AverageTimeToSeeOnePatient ?? TimeSpan.Zero;
+
+                  
+                    var availableTimeSlots = new List<DateTime>();
+
+                    
+                    TimeSpan currentTime = checkinTime;
+                    while (currentTime.Add(averageTimeToSeeOnePatient) <= checkoutTime)
+                    {
+                        if (!IsAppointmentTimeTaken(doctorId, appointmentDate, currentTime))
+                        {
+                        
+                            availableTimeSlots.Add(new DateTime(appointmentDate.Year, appointmentDate.Month, appointmentDate.Day, currentTime.Hours, currentTime.Minutes, 0));
+                        }
+
+                        currentTime = currentTime.Add(averageTimeToSeeOnePatient);
+                    }
+
+                    return Ok(availableTimeSlots);
+                }
+                else
+                {
+                    return NotFound("Doctor not found.");
+                }
+            }
+            catch (Exception ex)
+            {
+              
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+
+
+        bool IsAppointmentTimeTaken(int doctorId, DateTime appointmentDate, TimeSpan appointmentTime)
+        {
+         
+            var existingAppointment = _dbContext.Appointments.Any(a => a.ADId == doctorId && a.ADate == appointmentDate && a.ATime == appointmentTime);
+
+            
+            return existingAppointment;
+        }
+
+
     }
 }

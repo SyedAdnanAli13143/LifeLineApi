@@ -1,4 +1,4 @@
-
+﻿
 using LifeLineApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,20 +54,24 @@ namespace LifeLineApi.Controllers
 
         [HttpPost]
 
-        public async Task<ActionResult<Doctor>> PostDoctors(Doctor s)
+        public async Task<ActionResult<Hospital>> PostHospital(Hospital s)
         {
-            MailMessage mm = new MailMessage();
+            var checkemail = _dbContext.Hospitals.Where(x => x.HEmail == s.HEmail).FirstOrDefault();
+            if (checkemail == null)
+            {
+                MailMessage mm = new MailMessage();
             mm.From = new MailAddress("aliyankhan6446@gmail.com");
-            mm.To.Add(new MailAddress(s.DEmail));
+            mm.To.Add(new MailAddress(s.HEmail));
 
             Random emailrandomnum = new Random();
             int emailrandomnumber = emailrandomnum.Next(1000, 10000);
 
-
             mm.Subject = "Login credentials";
             mm.Body = "Click On the following link to log into LifeLine";
-            mm.Body = "Hi," + "<br/><br/>" + "We got request for  your account creation. Please click on the below link to Login an account" +
-                "<br/><br/> Password  is : " + emailrandomnumber + "<br/><br/>";
+            mm.Body = "Hi," + "<br/><br/>" + "We got a request for your account creation. Please click on the below link to log in to your account:" +
+                        "<br/><br/> Password is: " + emailrandomnumber + "<br/><br/>" +
+                        "<a href='http://localhost:5000/admin/Login'>Login Link</a>";
+
             mm.IsBodyHtml = true;
 
             SmtpClient smtp = new SmtpClient();
@@ -81,15 +85,23 @@ namespace LifeLineApi.Controllers
             smtp.Credentials = nc;
             smtp.UseDefaultCredentials = false;
 
-
-
             smtp.Send(mm);
-            s.DPassword = emailrandomnumber.ToString();
-            _dbContext.Doctors.Add(s);
+            s.HPassword = emailrandomnumber.ToString();
+            User t = new User();
+            t.Email = s.HEmail;
+            t.Password = s.HPassword;
+
+            t.RoleId = 2;
+            _dbContext.Users.Add(t);
+            _dbContext.Hospitals.Add(s);
             await _dbContext.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetHospitals), new { id = s.DId }, s);
-
+            return CreatedAtAction(nameof(GetHospitals), new { id = s.HId }, s);
+            }
+            else
+            {
+                return StatusCode(403, "Hospital with this Email already exists!");
+            }
         }
 
 
@@ -133,24 +145,23 @@ namespace LifeLineApi.Controllers
 
         [HttpDelete("{id}")]
 
-        public async Task<IActionResult> DeleteDoctor(int id)
+        public async Task<IActionResult> DeleteHospital(int id)
         {
-            if (_dbContext.Doctors == null)
+            if (_dbContext.Hospitals == null)
             {
                 return NotFound();
             }
-            var stud = await _dbContext.Doctors.FindAsync(id);
+            var stud = await _dbContext.Hospitals.FindAsync(id);
 
             if (stud == null)
             {
                 return NotFound();
             }
-            _dbContext.Doctors.Remove(stud);
+            _dbContext.Hospitals.Remove(stud);
             await _dbContext.SaveChangesAsync();
             return Ok();
         }
 
-        //Doctors End
 
         
     }
