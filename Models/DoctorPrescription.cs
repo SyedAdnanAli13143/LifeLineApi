@@ -15,11 +15,17 @@ public partial class DoctorPrescription
 
     public string? DpDisease { get; set; }
 
+    public string? DpMedicine { get; set; }
+
+    public TimeSpan? DpScheduleTime { get; set; }
+
+    public DateTime? DpStartDate { get; set; }
+
+    public DateTime? DpEndDate { get; set; }
+
+    public DateTime? SentDate { get; set; }
+
     public virtual Doctor? DpD { get; set; }
 
     public virtual Patient? DpP { get; set; }
-
-    public virtual ICollection<MedicalPortfolio> MedicalPortfolios { get; set; } = new List<MedicalPortfolio>();
-
-    public virtual ICollection<PrescriptionMedication> PrescriptionMedications { get; set; } = new List<PrescriptionMedication>();
 }

@@ -31,8 +31,6 @@ public partial class Patient
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
-    public virtual ICollection<MedicalPortfolio> MedicalPortfolios { get; set; } = new List<MedicalPortfolio>();
-
     public virtual Doctor? PD { get; set; }
 
     public virtual ICollection<VideoConsultation> VideoConsultations { get; set; } = new List<VideoConsultation>();

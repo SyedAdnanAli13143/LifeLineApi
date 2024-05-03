@@ -33,17 +33,21 @@ public partial class LifeLinedbContext : DbContext
 
     public virtual DbSet<Hospital> Hospitals { get; set; }
 
-    public virtual DbSet<MedicalPortfolio> MedicalPortfolios { get; set; }
+    public virtual DbSet<HospitalService> HospitalServices { get; set; }
 
     public virtual DbSet<Patient> Patients { get; set; }
 
-    public virtual DbSet<PrescriptionMedication> PrescriptionMedications { get; set; }
+    public virtual DbSet<Realtimewaitingtb> Realtimewaitingtbs { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<UserRole> UserRoles { get; set; }
 
     public virtual DbSet<VideoConsultation> VideoConsultations { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=DESKTOP-646VG22\\SQLEXPRESS;Database=LifeLinedb;Trusted_Connection=True;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer("Server=LP-029\\SQLEXPRESS;Database=LifeLinedb;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -71,6 +75,10 @@ public partial class LifeLinedbContext : DbContext
         modelBuilder.Entity<Appointment>(entity =>
         {
             entity.HasKey(e => e.AId).HasName("PK__Appointm__71AC6D412B7481FC");
+
+            entity.HasIndex(e => e.ADId, "IX_Appointments_A_D_ID");
+
+            entity.HasIndex(e => e.AHId, "IX_Appointments_A_H_ID");
 
             entity.Property(e => e.AId).HasColumnName("A_ID");
             entity.Property(e => e.ADId).HasColumnName("A_D_ID");
@@ -117,6 +125,8 @@ public partial class LifeLinedbContext : DbContext
 
             entity.ToTable("Blood_Availability");
 
+            entity.HasIndex(e => e.BaHId, "IX_Blood_Availability_BA_H_ID");
+
             entity.Property(e => e.BaId).HasColumnName("BA_ID");
             entity.Property(e => e.BaBloodGroup)
                 .HasMaxLength(15)
@@ -138,6 +148,8 @@ public partial class LifeLinedbContext : DbContext
         modelBuilder.Entity<Doctor>(entity =>
         {
             entity.HasKey(e => e.DId).HasName("PK__Doctors__76B8FF7DAC4F92E9");
+
+            entity.HasIndex(e => e.DHId, "IX_Doctors_D_H_ID");
 
             entity.Property(e => e.DId).HasColumnName("D_ID");
             entity.Property(e => e.DAvailablityStatus)
@@ -177,7 +189,7 @@ public partial class LifeLinedbContext : DbContext
 
         modelBuilder.Entity<DoctorPrescription>(entity =>
         {
-            entity.HasKey(e => e.DpId).HasName("PK__Doctor_P__7E732EA09FF169F0");
+            entity.HasKey(e => e.DpId).HasName("PK__Doctor_P__7E732EA0BAE0D0FB");
 
             entity.ToTable("Doctor_Prescription");
 
@@ -190,16 +202,28 @@ public partial class LifeLinedbContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("DP_Disease");
+            entity.Property(e => e.DpEndDate)
+                .HasColumnType("date")
+                .HasColumnName("DP_EndDate");
+            entity.Property(e => e.DpMedicine)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("DP_Medicine");
             entity.Property(e => e.DpPId).HasColumnName("DP_P_ID");
+            entity.Property(e => e.DpScheduleTime).HasColumnName("DP_ScheduleTime");
+            entity.Property(e => e.DpStartDate)
+                .HasColumnType("date")
+                .HasColumnName("DP_StartDate");
+            entity.Property(e => e.SentDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.DpD).WithMany(p => p.DoctorPrescriptions)
                 .HasForeignKey(d => d.DpDId)
-                .HasConstraintName("FK__Doctor_Pr__DP_D___5CD6CB2B");
+                .HasConstraintName("FK__Doctor_Pr__DP_D___3C34F16F");
 
             entity.HasOne(d => d.DpP).WithMany(p => p.DoctorPrescriptions)
                 .HasForeignKey(d => d.DpPId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK__Doctor_Pr__DP_P___5DCAEF64");
+                .HasConstraintName("FK__Doctor_Pr__DP_P___3D2915A8");
         });
 
         modelBuilder.Entity<EmergencyContact>(entity =>
@@ -207,6 +231,8 @@ public partial class LifeLinedbContext : DbContext
             entity.HasKey(e => e.EcId).HasName("PK__Emergenc__46237E5951031F2D");
 
             entity.ToTable("Emergency_Contact");
+
+            entity.HasIndex(e => e.EcHId, "IX_Emergency_Contact_EC_H_ID");
 
             entity.Property(e => e.EcId).HasColumnName("EC_ID");
             entity.Property(e => e.EcHId).HasColumnName("EC_H_ID");
@@ -228,6 +254,10 @@ public partial class LifeLinedbContext : DbContext
             entity.HasKey(e => e.FId).HasName("PK__Feedback__2C6EC7C3D9F307C6");
 
             entity.ToTable("Feedback");
+
+            entity.HasIndex(e => e.FDId, "IX_Feedback_F_D_ID");
+
+            entity.HasIndex(e => e.FPId, "IX_Feedback_F_P_ID");
 
             entity.Property(e => e.FId).HasColumnName("F_ID");
             entity.Property(e => e.FComments)
@@ -252,6 +282,8 @@ public partial class LifeLinedbContext : DbContext
             entity.HasKey(e => e.HeId).HasName("PK__H_Employ__692EA79EF70025B5");
 
             entity.ToTable("H_Employee");
+
+            entity.HasIndex(e => e.HeHId, "IX_H_Employee_HE_H_ID");
 
             entity.Property(e => e.HeId).HasColumnName("HE_ID");
             entity.Property(e => e.HeEmail)
@@ -305,34 +337,32 @@ public partial class LifeLinedbContext : DbContext
             entity.Property(e => e.HlLongitude).HasColumnName("HL_Longitude");
         });
 
-        modelBuilder.Entity<MedicalPortfolio>(entity =>
+        modelBuilder.Entity<HospitalService>(entity =>
         {
-            entity.HasKey(e => e.MpId).HasName("PK__Medical___D12FC71573D6D922");
+            entity.HasKey(e => e.HsId).HasName("PK__Hospital__76CFDB5411B518D2");
 
-            entity.ToTable("Medical_Portfolio");
+            entity.ToTable("Hospital_Services");
 
-            entity.Property(e => e.MpId).HasColumnName("MP_ID");
-            entity.Property(e => e.MpDpId).HasColumnName("MP_DP_ID");
-            entity.Property(e => e.MpPId).HasColumnName("MP_P_ID");
-            entity.Property(e => e.MpPmId).HasColumnName("MP_PM_ID");
+            entity.Property(e => e.HsId).HasColumnName("HS_ID");
+            entity.Property(e => e.HsHId).HasColumnName("HS_H_ID");
+            entity.Property(e => e.HsServices)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("HS_Services");
 
-            entity.HasOne(d => d.MpDp).WithMany(p => p.MedicalPortfolios)
-                .HasForeignKey(d => d.MpDpId)
-                .HasConstraintName("FK__Medical_P__MP_DP__6E01572D");
-
-            entity.HasOne(d => d.MpP).WithMany(p => p.MedicalPortfolios)
-                .HasForeignKey(d => d.MpPId)
+            entity.HasOne(d => d.HsH).WithMany(p => p.HospitalServices)
+                .HasForeignKey(d => d.HsHId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK__Medical_P__MP_P___6EF57B66");
-
-            entity.HasOne(d => d.MpPm).WithMany(p => p.MedicalPortfolios)
-                .HasForeignKey(d => d.MpPmId)
-                .HasConstraintName("FK__Medical_P__MP_PM__6FE99F9F");
+                .HasConstraintName("FK__Hospital___HS_H___160F4887");
         });
 
         modelBuilder.Entity<Patient>(entity =>
         {
             entity.HasKey(e => e.PId).HasName("PK__Patients__A3420A77592C4340");
+
+            entity.ToTable(tb => tb.HasTrigger("InsertIntoRealTimeWaiting"));
+
+            entity.HasIndex(e => e.PDId, "IX_Patients_P_D_ID");
 
             entity.Property(e => e.PId).HasColumnName("P_ID");
             entity.Property(e => e.PAStatus)
@@ -373,34 +403,62 @@ public partial class LifeLinedbContext : DbContext
                 .HasConstraintName("FK__Patients__P_D_ID__5441852A");
         });
 
-        modelBuilder.Entity<PrescriptionMedication>(entity =>
+        modelBuilder.Entity<Realtimewaitingtb>(entity =>
         {
-            entity.HasKey(e => e.PmId).HasName("PK__Prescrip__8E8EC70B6630E1AA");
+            entity.HasKey(e => e.Sid).HasName("PK__realtime__DDDFDD36B4A63E6A");
 
-            entity.ToTable("Prescription_Medications");
+            entity.ToTable("realtimewaitingtb");
 
-            entity.Property(e => e.PmId).HasColumnName("PM_ID");
-            entity.Property(e => e.PmDosage)
+            entity.Property(e => e.Sid).HasColumnName("sid");
+            entity.Property(e => e.PDate)
+                .HasColumnType("date")
+                .HasColumnName("P_Date");
+            entity.Property(e => e.PEmail)
+                .HasMaxLength(255)
+                .HasColumnName("P_Email");
+            entity.Property(e => e.PNumber)
+                .HasMaxLength(11)
+                .IsUnicode(false)
+                .HasColumnName("P_number");
+            entity.Property(e => e.PTime).HasColumnName("P_Time");
+            entity.Property(e => e.Status)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasDefaultValueSql("('enquee')")
+                .HasColumnName("status");
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Users__3213E83F090168FA");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Email)
+                .HasMaxLength(80)
+                .IsUnicode(false)
+                .HasColumnName("email");
+            entity.Property(e => e.Password)
                 .HasMaxLength(255)
                 .IsUnicode(false)
-                .HasColumnName("PM_Dosage");
-            entity.Property(e => e.PmDpId).HasColumnName("PM_DP_ID");
-            entity.Property(e => e.PmEndDate)
-                .HasColumnType("date")
-                .HasColumnName("PM_EndDate");
-            entity.Property(e => e.PmMedicine)
-                .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("PM_Medicine");
-            entity.Property(e => e.PmScheduleTime).HasColumnName("PM_ScheduleTime");
-            entity.Property(e => e.PmStartDate)
-                .HasColumnType("date")
-                .HasColumnName("PM_StartDate");
+                .HasColumnName("password");
+            entity.Property(e => e.RoleId).HasColumnName("role_id");
 
-            entity.HasOne(d => d.PmDp).WithMany(p => p.PrescriptionMedications)
-                .HasForeignKey(d => d.PmDpId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK__Prescript__PM_DP__68487DD7");
+            entity.HasOne(d => d.Role).WithMany(p => p.Users)
+                .HasForeignKey(d => d.RoleId)
+                .HasConstraintName("FK__Users__role_id__04E4BC85");
+        });
+
+        modelBuilder.Entity<UserRole>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__User_Rol__3213E83F3B6C24CA");
+
+            entity.ToTable("User_Roles");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<VideoConsultation>(entity =>
@@ -408,6 +466,10 @@ public partial class LifeLinedbContext : DbContext
             entity.HasKey(e => e.VcId).HasName("PK__Video_Co__FFB4AD255FFE2FE3");
 
             entity.ToTable("Video_Consultation");
+
+            entity.HasIndex(e => e.VcDId, "IX_Video_Consultation_VC_D_ID");
+
+            entity.HasIndex(e => e.VcPId, "IX_Video_Consultation_VC_P_ID");
 
             entity.Property(e => e.VcId).HasColumnName("VC_ID");
             entity.Property(e => e.VcDId).HasColumnName("VC_D_ID");

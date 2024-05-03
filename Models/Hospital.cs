@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LifeLineApi.Models;
 
@@ -15,10 +16,11 @@ public partial class Hospital
 
     public string? HPassword { get; set; }
 
-    public double? HlLatitude { get; set; }
+    public double HlLatitude { get; set; }
 
-    public double? HlLongitude { get; set; }
-
+    public double HlLongitude { get; set; }
+    [NotMapped]
+    public double? DistanceInKm { get; set; }
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
     public virtual ICollection<BloodAvailability> BloodAvailabilities { get; set; } = new List<BloodAvailability>();
@@ -28,4 +30,6 @@ public partial class Hospital
     public virtual ICollection<EmergencyContact> EmergencyContacts { get; set; } = new List<EmergencyContact>();
 
     public virtual ICollection<HEmployee> HEmployees { get; set; } = new List<HEmployee>();
+
+    public virtual ICollection<HospitalService> HospitalServices { get; set; } = new List<HospitalService>();
 }

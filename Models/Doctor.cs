@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LifeLineApi.Models;
 
 public partial class Doctor
 {
-    [Key]
     public int DId { get; set; }
 
     public int? DHId { get; set; }
@@ -22,12 +20,16 @@ public partial class Doctor
 
     public string? DField { get; set; }
 
-    public string? DAvailablityStatus { get; set; } 
+    public string? DAvailablityStatus { get; set; }
 
     public string? DImage { get; set; }
-
     [NotMapped]
-    public IFormFile? ImageFile { get; set; }
+    public IFormFile ImageFile { get; set; }
+    public TimeSpan? CheckinTime { get; set; }
+
+    public TimeSpan? CheckoutTime { get; set; }
+
+    public TimeSpan? AverageTimeToSeeOnePatient { get; set; }
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
